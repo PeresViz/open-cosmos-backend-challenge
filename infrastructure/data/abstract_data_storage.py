@@ -17,7 +17,7 @@ class AbstractDataStorage(ABC):
             raise HTTPException(status_code=500, detail="Failed to fetch data from server")
 
     @abstractmethod
-    def process_data(self, data: list[dict[str, Any]]):
+    def save_data(self, data: dict[str, Any]):
         ...
 
     @abstractmethod

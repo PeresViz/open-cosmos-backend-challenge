@@ -20,12 +20,11 @@ class RedisDataStorage(AbstractDataStorage):
         else:
             raise HTTPException(status_code=500, detail="Failed to fetch data from server")
 
-    def process_data(self, data: list[dict[str, Any]]):
-        for d in data:
-            self.redis_client.hset('data_store', d['time'], json.dumps(d))
+    def save_data(self, data: dict[str, Any]):
+        self.redis_client.hset('data', data['time'], json.dumps(data))
 
     def get_data(self):
-        data = self.redis_client.hgetall('data_store')
+        data = self.redis_client.hgetall('data')
         return [json.loads(data_json) for data_json in data.values()]
 
     def save_discard_reasons(self, discard_reasons: list[dict[str, Any]]):
