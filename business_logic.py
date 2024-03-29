@@ -33,7 +33,7 @@ class BusinessLogic:
 
         return filtered_data
 
-    def process_and_store_data(self):
+    def fetch_data_from_server(self):
         data = self.data_storage.fetch_data_from_server(28462)
         if data:
             valid_data, discard_reasons = self.apply_business_rules(data)
