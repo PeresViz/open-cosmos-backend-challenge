@@ -19,8 +19,6 @@ async def authenticate_user(api_key: str = Query(...)):
     else:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
-# Custom dependency to check if user is authorized based on their role
-
 
 def check_permissions(required_permissions: list, user_role: str = Depends(authenticate_user)):
     if not set(required_permissions).issubset(ROLES.get(user_role, [])):
