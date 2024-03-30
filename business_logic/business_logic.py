@@ -1,7 +1,13 @@
-from typing import Union, Optional
+from typing import Any, Optional
 from datetime import datetime, timedelta
 from infrastructure.data.redis_data_storage import RedisDataStorage
 from infrastructure.clients.external_data_service import ExternalDataService
+from business_logic.constants import (
+    SYSTEM_TAG,
+    SUSPECT_TAG,
+    REASON_DATA_IS_TOO_OLD,
+    REASON_DATA_IS_SYSTEM_OR_SUSPECT,
+)
 
 
 class BusinessLogic:
@@ -9,16 +15,16 @@ class BusinessLogic:
         self.data_storage = RedisDataStorage()
 
     def get_discard_reasons_from_server_data(self,
-                                             data: dict[str, Union[int, list[int], list[str]]]
-                                             ) -> list[Optional[dict[str, Union[int, str]]]]:
+                                             data: dict[str, Any]
+                                             ) -> list[Optional[dict[str, Any]]]:
         discard_reasons = []
         timestamp = data['time']
 
         if data['time'] < (datetime.now() - timedelta(hours=1)).timestamp():
-            discard_reasons.append({"timestamp": timestamp, "reason": "Data is too old"})
+            discard_reasons.append({"timestamp": timestamp, "reason": REASON_DATA_IS_TOO_OLD})
 
-        if 'system' in data['tags'] or 'suspect' in data['tags']:
-            discard_reasons.append({"timestamp": timestamp, "reason": "Data is system or suspect"})
+        if SYSTEM_TAG in data['tags'] or SUSPECT_TAG in data['tags']:
+            discard_reasons.append({"timestamp": timestamp, "reason": REASON_DATA_IS_SYSTEM_OR_SUSPECT})
 
         return discard_reasons
 
