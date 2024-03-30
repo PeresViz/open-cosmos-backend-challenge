@@ -30,5 +30,8 @@ class RedisDataStorage(AbstractDataStorage):
 
     def get_discard_reasons(self):
         discard_reasons = self.redis_client.hgetall(REDIS_DISCARD_REASONS_HASH_KEY)
-        reasons_list = [{"timestamp": timestamp.decode(), "reason": reason.decode()} for timestamp, reason in discard_reasons.items()]
+        reasons_list = [
+            {"timestamp": timestamp.decode(), "reason": reason.decode()}
+            for timestamp, reason in discard_reasons.items()
+        ]
         return reasons_list
