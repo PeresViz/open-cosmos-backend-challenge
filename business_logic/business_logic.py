@@ -14,34 +14,34 @@ class BusinessLogic:
     def __init__(self):
         self.data_storage = RedisDataStorage()
 
-    def get_discard_reasons_from_server_data(self,
-                                             data: dict[str, Any]
-                                             ) -> list[Optional[dict[str, Any]]]:
+    def get_discard_reasons_from_server_data(self, data: dict[str, Any]) -> list[Optional[dict[str, Any]]]:
         discard_reasons = []
         timestamp = data['time']
 
-        if data['time'] < (datetime.now() - timedelta(hours=1)).timestamp():
+        if self.__is_data_too_old(timestamp=timestamp):
             discard_reasons.append({"timestamp": timestamp, "reason": REASON_DATA_IS_TOO_OLD})
 
-        if SYSTEM_TAG in data['tags'] or SUSPECT_TAG in data['tags']:
+        if self.__is_data_system_or_suspect(data_tags=data['tags']):
             discard_reasons.append({"timestamp": timestamp, "reason": REASON_DATA_IS_SYSTEM_OR_SUSPECT})
 
         return discard_reasons
 
-    def get_data_with_filters(self, start_time, end_time):
+    def get_data_with_filters(self, start_time: datetime = None, end_time: datetime = None) -> list[dict[str, Any]]:
         data = self.data_storage.get_data()
         filtered_data = []
 
         for d in data:
-            if start_time and d['time'] < start_time.timestamp():
-                continue
-            if end_time and d['time'] > end_time.timestamp():
-                continue
-            filtered_data.append(d)
+            if self.__is_timestamp_within_time_range(
+                timestamp=d['time'],
+                start_time=start_time,
+                end_time=end_time
+            ):
+                d['time'] = datetime.fromtimestamp(d['time']).isoformat()
+                filtered_data.append(d)
 
         return filtered_data
 
-    def fetch_data_from_server(self):
+    def fetch_data_from_server(self) -> None:
         server_data = ExternalDataService.fetch_data_from_server()
         if server_data:
             self.data_storage.save_data(server_data)
@@ -49,6 +49,25 @@ class BusinessLogic:
             if discard_reasons:
                 self.data_storage.save_discard_reasons(discard_reasons)
 
-    def get_discard_reasons(self):
+    def get_discard_reasons(self) -> list[dict[str, Any]]:
         return self.data_storage.get_discard_reasons()
+
+    @staticmethod
+    def __is_timestamp_within_time_range(
+            timestamp: int,
+            start_time: datetime = None,
+            end_time: datetime = None
+    ) -> bool:
+        return (start_time is None or timestamp >= start_time.timestamp()) \
+               and \
+               (end_time is None or timestamp <= end_time.timestamp())
+
+    @staticmethod
+    def __is_data_too_old(timestamp: int) -> bool:
+        return timestamp < (datetime.now() - timedelta(hours=1)).timestamp()
+
+    @staticmethod
+    def __is_data_system_or_suspect(data_tags: list[str]) -> bool:
+        return SYSTEM_TAG in data_tags or SUSPECT_TAG in data_tags
+
 

@@ -3,7 +3,7 @@ from datetime import datetime
 
 from api.decorators.requires_permissions import requires_permissions
 from api.decorators.fetch_data_from_server import fetch_data_from_server
-from business_logic import BusinessLogic
+from business_logic.business_logic import BusinessLogic
 
 app = FastAPI()
 business_logic = BusinessLogic()
