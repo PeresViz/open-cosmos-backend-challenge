@@ -14,17 +14,20 @@ class BusinessLogic:
     def __init__(self):
         self.data_storage = RedisDataStorage()
 
-    def get_discard_reasons_from_server_data(self, data: dict[str, Any]) -> list[Optional[dict[str, Any]]]:
-        discard_reasons = []
+    def get_discard_reasons_from_server_data(self, data: dict[str, Any]) -> dict[str, Any]:
+        reasons = []
         timestamp = data['time']
 
         if self.__is_data_too_old(timestamp=timestamp):
-            discard_reasons.append({"timestamp": timestamp, "reason": REASON_DATA_IS_TOO_OLD})
+            reasons.append(REASON_DATA_IS_TOO_OLD)
 
         if self.__is_data_system_or_suspect(data_tags=data['tags']):
-            discard_reasons.append({"timestamp": timestamp, "reason": REASON_DATA_IS_SYSTEM_OR_SUSPECT})
+            reasons.append(REASON_DATA_IS_SYSTEM_OR_SUSPECT)
 
-        return discard_reasons
+        return {
+            "timestamp": self.__unix_timestamp_to_iso8601_timestamp(unix_timestamp=timestamp),
+            "reasons": reasons
+        }
 
     def get_data_with_filters(self, start_time: datetime = None, end_time: datetime = None) -> list[dict[str, Any]]:
         data = self.data_storage.get_data()
@@ -36,7 +39,7 @@ class BusinessLogic:
                 start_time=start_time,
                 end_time=end_time
             ):
-                d['time'] = datetime.fromtimestamp(d['time']).isoformat()
+                d['time'] = self.__unix_timestamp_to_iso8601_timestamp(unix_timestamp=d['time'])
                 filtered_data.append(d)
 
         return filtered_data
@@ -69,5 +72,9 @@ class BusinessLogic:
     @staticmethod
     def __is_data_system_or_suspect(data_tags: list[str]) -> bool:
         return SYSTEM_TAG in data_tags or SUSPECT_TAG in data_tags
+
+    @staticmethod
+    def __unix_timestamp_to_iso8601_timestamp(unix_timestamp: int):
+        return datetime.fromtimestamp(unix_timestamp).isoformat()
 
 
