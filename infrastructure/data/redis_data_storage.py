@@ -1,7 +1,5 @@
 import redis
 import json
-import requests
-from fastapi import HTTPException
 from typing import Any
 from infrastructure.data.abstract_data_storage import AbstractDataStorage
 
@@ -9,16 +7,6 @@ from infrastructure.data.abstract_data_storage import AbstractDataStorage
 class RedisDataStorage(AbstractDataStorage):
     def __init__(self):
         self.redis_client = redis.Redis(host='localhost', port=6379, db=0)
-
-    def fetch_data_from_server(self, port):
-        url = f"http://localhost:{port}"  # Assuming the server is running locally
-        response = requests.get(url)
-        if response.status_code == 200:
-            return response.json()
-        elif response.status_code == 404:
-            return None
-        else:
-            raise HTTPException(status_code=500, detail="Failed to fetch data from server")
 
     def save_data(self, data: dict[str, Any]):
         self.redis_client.hset('data', data['time'], json.dumps(data))

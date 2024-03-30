@@ -1,6 +1,7 @@
 from typing import Union, Optional
 from datetime import datetime, timedelta
 from infrastructure.data.redis_data_storage import RedisDataStorage
+from infrastructure.clients.external_data_service import ExternalDataService
 
 
 class BusinessLogic:
@@ -35,7 +36,7 @@ class BusinessLogic:
         return filtered_data
 
     def fetch_data_from_server(self):
-        server_data = self.data_storage.fetch_data_from_server(28462)
+        server_data = ExternalDataService.fetch_data_from_server()
         if server_data:
             self.data_storage.save_data(server_data)
             discard_reasons = self.get_discard_reasons_from_server_data(server_data)
