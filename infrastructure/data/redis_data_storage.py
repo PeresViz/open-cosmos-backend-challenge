@@ -15,17 +15,17 @@ class RedisDataStorage(AbstractDataStorage):
     def __init__(self):
         self.redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB_NUMBER)
 
-    def save_data(self, data: dict[str, Any]):
+    def save_data(self, data: dict[str, Any]) -> None:
         self.redis_client.hset(REDIS_DATA_HASH_KEY, data['time'], json.dumps(data))
 
-    def get_data(self):
+    def get_data(self) -> list[dict[str, Any]]:
         data = self.redis_client.hgetall(REDIS_DATA_HASH_KEY)
         return [json.loads(data_json) for data_json in data.values()]
 
-    def save_discard_reasons(self, discard_reasons: dict[str, Any]):
+    def save_discard_reasons(self, discard_reasons: dict[str, Any]) -> None:
         self.redis_client.hset(REDIS_DISCARD_REASONS_HASH_KEY, discard_reasons['time'], str(discard_reasons['reasons']))
 
-    def get_discard_reasons(self):
+    def get_discard_reasons(self) -> list[dict[str, Any]]:
         discard_reasons = self.redis_client.hgetall(REDIS_DISCARD_REASONS_HASH_KEY)
         reasons_list = [
             {"time": time.decode(), "reasons": eval(reasons)}
