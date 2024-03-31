@@ -1,6 +1,6 @@
-from typing import Any, Optional
+from typing import Any
 from datetime import datetime, timedelta
-from infrastructure.data.redis_data_storage import RedisDataStorage
+from infrastructure.data.abstract_data_storage import AbstractDataStorage
 from infrastructure.clients.external_data_service import ExternalDataService
 from business_logic.constants import (
     SYSTEM_TAG,
@@ -11,8 +11,8 @@ from business_logic.constants import (
 
 
 class BusinessLogic:
-    def __init__(self):
-        self.data_storage = RedisDataStorage()
+    def __init__(self, data_storage: AbstractDataStorage):
+        self.data_storage = data_storage
 
     def fetch_data_from_server(self) -> None:
         server_data = ExternalDataService.fetch_data_from_server()
