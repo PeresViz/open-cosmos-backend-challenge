@@ -14,7 +14,23 @@ class BusinessLogic:
     def __init__(self):
         self.data_storage = RedisDataStorage()
 
-    def get_discard_reasons_from_server_data(self, data: dict[str, Any]) -> dict[str, Any]:
+    def fetch_data_from_server(self) -> None:
+        server_data = ExternalDataService.fetch_data_from_server()
+        if server_data:
+            self.data_storage.save_data(server_data)
+            discard_reasons = self.get_data_discard_reasons(server_data)
+            if discard_reasons:
+                self.data_storage.save_discard_reasons(discard_reasons)
+
+    def get_data(self, start_time: datetime = None, end_time: datetime = None) -> list[dict[str, Any]]:
+        data = self.data_storage.get_data()
+        return self.__apply_time_filter_to_data(data=data, start_time=start_time, end_time=end_time)
+
+    def get_discard_reasons(self, start_time: datetime = None, end_time: datetime = None) -> list[dict[str, Any]]:
+        discard_reasons = self.data_storage.get_discard_reasons()
+        return self.__apply_time_filter_to_data(data=discard_reasons, start_time=start_time, end_time=end_time)
+
+    def get_data_discard_reasons(self, data: dict[str, Any]) -> dict[str, Any]:
         reasons = []
 
         if self.__is_data_too_old(timestamp=data['time']):
@@ -27,22 +43,6 @@ class BusinessLogic:
             "time": data['time'],
             "reasons": reasons
         }
-
-    def fetch_data_from_server(self) -> None:
-        server_data = ExternalDataService.fetch_data_from_server()
-        if server_data:
-            self.data_storage.save_data(server_data)
-            discard_reasons = self.get_discard_reasons_from_server_data(server_data)
-            if discard_reasons:
-                self.data_storage.save_discard_reasons(discard_reasons)
-
-    def get_data(self, start_time: datetime = None, end_time: datetime = None) -> list[dict[str, Any]]:
-        data = self.data_storage.get_data()
-        return self.__apply_time_filter_to_data(data=data, start_time=start_time, end_time=end_time)
-
-    def get_discard_reasons(self, start_time: datetime = None, end_time: datetime = None) -> list[dict[str, Any]]:
-        discard_reasons = self.data_storage.get_discard_reasons()
-        return self.__apply_time_filter_to_data(data=discard_reasons, start_time=start_time, end_time=end_time)
 
     def __apply_time_filter_to_data(
             self,
