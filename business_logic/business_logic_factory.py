@@ -5,5 +5,5 @@ from infrastructure.data.redis_data_storage import RedisDataStorage
 
 class BusinessLogicFactory:
     @staticmethod
-    def instantiate_business_logic():
+    def instantiate_business_logic() -> BusinessLogic:
         return BusinessLogic(data_storage=RedisDataStorage())
