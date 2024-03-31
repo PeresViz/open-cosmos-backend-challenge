@@ -13,11 +13,11 @@ business_logic = BusinessLogic()
 @fetch_data_from_server(business_logic)
 @requires_permissions(["read_data"])
 async def get_data(start_time: datetime = None, end_time: datetime = None):
-    return business_logic.get_data_with_filters(start_time, end_time)
+    return business_logic.get_data(start_time=start_time, end_time=end_time)
 
 
 @app.get("/discard_reasons")
 @fetch_data_from_server(business_logic)
 @requires_permissions(["view_discard_reasons"])
-async def get_discard_data():
-    return business_logic.get_discard_reasons()
+async def get_discard_data(start_time: datetime = None, end_time: datetime = None):
+    return business_logic.get_discard_reasons(start_time=start_time, end_time=end_time)

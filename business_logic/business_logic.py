@@ -16,33 +16,17 @@ class BusinessLogic:
 
     def get_discard_reasons_from_server_data(self, data: dict[str, Any]) -> dict[str, Any]:
         reasons = []
-        timestamp = data['time']
 
-        if self.__is_data_too_old(timestamp=timestamp):
+        if self.__is_data_too_old(timestamp=data['time']):
             reasons.append(REASON_DATA_IS_TOO_OLD)
 
         if self.__is_data_system_or_suspect(data_tags=data['tags']):
             reasons.append(REASON_DATA_IS_SYSTEM_OR_SUSPECT)
 
         return {
-            "timestamp": self.__unix_timestamp_to_iso8601_timestamp(unix_timestamp=timestamp),
+            "time": data['time'],
             "reasons": reasons
         }
-
-    def get_data_with_filters(self, start_time: datetime = None, end_time: datetime = None) -> list[dict[str, Any]]:
-        data = self.data_storage.get_data()
-        filtered_data = []
-
-        for d in data:
-            if self.__is_timestamp_within_time_range(
-                timestamp=d['time'],
-                start_time=start_time,
-                end_time=end_time
-            ):
-                d['time'] = self.__unix_timestamp_to_iso8601_timestamp(unix_timestamp=d['time'])
-                filtered_data.append(d)
-
-        return filtered_data
 
     def fetch_data_from_server(self) -> None:
         server_data = ExternalDataService.fetch_data_from_server()
@@ -52,8 +36,33 @@ class BusinessLogic:
             if discard_reasons:
                 self.data_storage.save_discard_reasons(discard_reasons)
 
-    def get_discard_reasons(self) -> list[dict[str, Any]]:
-        return self.data_storage.get_discard_reasons()
+    def get_data(self, start_time: datetime = None, end_time: datetime = None) -> list[dict[str, Any]]:
+        data = self.data_storage.get_data()
+        return self.__apply_time_filter_to_data(data=data, start_time=start_time, end_time=end_time)
+
+    def get_discard_reasons(self, start_time: datetime = None, end_time: datetime = None) -> list[dict[str, Any]]:
+        discard_reasons = self.data_storage.get_discard_reasons()
+        return self.__apply_time_filter_to_data(data=discard_reasons, start_time=start_time, end_time=end_time)
+
+    def __apply_time_filter_to_data(
+            self,
+            data: list[dict[str, Any]],
+            start_time: datetime = None,
+            end_time: datetime = None
+    ) -> list[dict[str, Any]]:
+        filtered_data = []
+
+        for d in data:
+            d['time'] = int(d['time'])
+            if self.__is_timestamp_within_time_range(
+                timestamp=d['time'],
+                start_time=start_time,
+                end_time=end_time
+            ):
+                d['time'] = self.__unix_timestamp_to_iso8601_timestamp(unix_timestamp=d['time'])
+                filtered_data.append(d)
+
+        return filtered_data
 
     @staticmethod
     def __is_timestamp_within_time_range(

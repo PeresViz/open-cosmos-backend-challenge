@@ -23,14 +23,12 @@ class RedisDataStorage(AbstractDataStorage):
         return [json.loads(data_json) for data_json in data.values()]
 
     def save_discard_reasons(self, discard_reasons: dict[str, Any]):
-        timestamp = discard_reasons['timestamp']
-        reasons = discard_reasons['reasons']
-        self.redis_client.hset(REDIS_DISCARD_REASONS_HASH_KEY, timestamp, str(reasons))
+        self.redis_client.hset(REDIS_DISCARD_REASONS_HASH_KEY, discard_reasons['time'], str(discard_reasons['reasons']))
 
     def get_discard_reasons(self):
         discard_reasons = self.redis_client.hgetall(REDIS_DISCARD_REASONS_HASH_KEY)
         reasons_list = [
-            {"timestamp": timestamp.decode(), "reasons": eval(reasons)}
-            for timestamp, reasons in discard_reasons.items()
+            {"time": time.decode(), "reasons": eval(reasons)}
+            for time, reasons in discard_reasons.items()
         ]
         return reasons_list

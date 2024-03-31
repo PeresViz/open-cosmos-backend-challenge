@@ -10,6 +10,6 @@ def requires_permissions(required_permissions: list):
         async def wrapper(user_role: str = Depends(authenticate_user), start_time: datetime = None, end_time: datetime = None):
             if not set(required_permissions).issubset(ROLES.get(user_role, [])):
                 raise HTTPException(status_code=403, detail="Insufficient permissions")
-            return await func(start_time=start_time, end_time=end_time) if func.__name__ == "get_data" else await func()
+            return await func(start_time=start_time, end_time=end_time)
         return wrapper
     return decorator
