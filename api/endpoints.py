@@ -27,4 +27,4 @@ async def get_discard_data(
         start_time: datetime = None,
         end_time: datetime = None,
 ):
-    return business_logic.get_discard_reasons(start_time=start_time, end_time=end_time)
+    return business_logic.get_reasons_for_invalid_data(start_time=start_time, end_time=end_time)

@@ -14,9 +14,9 @@ class AbstractDataStorage(ABC):
         ...
 
     @abstractmethod
-    def save_discard_reasons(self, discard_reasons: dict[str, Any]) -> None:
+    def save_reasons_for_invalid_data(self, discard_reasons: dict[str, Any]) -> None:
         ...
 
     @abstractmethod
-    def get_discard_reasons(self) -> list[dict[str, Any]]:
+    def get_reasons_for_invalid_data(self) -> list[dict[str, Any]]:
         ...

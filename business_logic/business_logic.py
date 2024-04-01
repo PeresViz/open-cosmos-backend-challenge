@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 from datetime import datetime, timedelta
 from infrastructure.data.abstract_data_storage import AbstractDataStorage
 from infrastructure.clients.external_data_service import ExternalDataService
@@ -18,19 +18,20 @@ class BusinessLogic:
         server_data = ExternalDataService.fetch_data_from_server()
         if server_data:
             self.data_storage.save_data(server_data)
-            discard_reasons = self.get_data_discard_reasons(server_data)
-            if discard_reasons:
-                self.data_storage.save_discard_reasons(discard_reasons)
+            invalid_data = self.__invalidate_data(server_data)
+            if invalid_data:
+                self.data_storage.save_reasons_for_invalid_data(invalid_data)
 
-    def get_data(self, start_time: datetime = None, end_time: datetime = None) -> list[dict[str, Any]]:
+    def get_data(self, start_time: datetime = None, end_time: datetime = None) -> list[Optional[dict[str, Any]]]:
         data = self.data_storage.get_data()
-        return self.__apply_time_filter_to_data(data=data, start_time=start_time, end_time=end_time)
+        return self.__apply_time_filter_to_data(data=data, start_time=start_time, end_time=end_time) if data else []
 
-    def get_discard_reasons(self, start_time: datetime = None, end_time: datetime = None) -> list[dict[str, Any]]:
-        discard_reasons = self.data_storage.get_discard_reasons()
-        return self.__apply_time_filter_to_data(data=discard_reasons, start_time=start_time, end_time=end_time)
+    def get_reasons_for_invalid_data(self, start_time: datetime = None, end_time: datetime = None) -> list[Optional[dict[str, Any]]]:
+        discard_reasons = self.data_storage.get_reasons_for_invalid_data()
+        return self.__apply_time_filter_to_data(data=discard_reasons, start_time=start_time, end_time=end_time) \
+            if discard_reasons else []
 
-    def get_data_discard_reasons(self, data: dict[str, Any]) -> dict[str, Any]:
+    def __invalidate_data(self, data: dict[str, Any]) -> dict[str, Any]:
         reasons = []
 
         if self.__is_data_too_old(timestamp=data['time']):
@@ -39,10 +40,7 @@ class BusinessLogic:
         if self.__is_data_system_or_suspect(data_tags=data['tags']):
             reasons.append(REASON_DATA_IS_SYSTEM_OR_SUSPECT)
 
-        return {
-            "time": data['time'],
-            "reasons": reasons
-        }
+        return {"time": data['time'], "reasons": reasons} if reasons else {}
 
     def __apply_time_filter_to_data(
             self,
