@@ -6,6 +6,8 @@ from pytest_lazyfixture import lazy_fixture
 
 from business_logic.business_logic import BusinessLogic
 from business_logic.constants import REASON_DATA_IS_TOO_OLD, SUSPECT_TAG, SYSTEM_TAG, REASON_DATA_IS_SYSTEM_OR_SUSPECT
+from models.data import Data
+from models.data_invalidation_reasons import DataInvalidationReasons
 
 
 @pytest.fixture
@@ -33,26 +35,30 @@ def invalidation_reasons() -> list[dict[str, Any]]:
 
 
 @pytest.fixture
-def invalidation_reasons_with_time_in_iso_format(invalidation_reasons: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def invalidation_reasons_with_time_in_iso_format(
+        invalidation_reasons: list[dict[str, Any]]
+) -> list[DataInvalidationReasons]:
     change_time_format = lambda d: {**d, "time": datetime.fromtimestamp(d["time"]).isoformat()}
     data = list(map(change_time_format, invalidation_reasons))
-    return data
+    return [DataInvalidationReasons(time=d['time'], reasons=d['reasons']) for d in data]
 
 
 @pytest.fixture
-def data_with_time_in_iso_format(server_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def data_with_time_in_iso_format(server_data: list[dict[str, Any]]) -> list[Data]:
     change_time_format = lambda d: {**d, "time": datetime.fromtimestamp(d["time"]).isoformat()}
     data = list(map(change_time_format, server_data))
-    return data
+    return [Data(time=d['time'], value=d['value'], tags=d['tags']) for d in data]
 
 
 @pytest.fixture
-def data_with_endtime_constraint(data_with_time_in_iso_format: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def data_with_endtime_constraint(data_with_time_in_iso_format: list[Data]) -> list[Data]:
     return data_with_time_in_iso_format[:2]
 
 
 @pytest.fixture
-def invalidation_reasons_with_endtime_constraint(invalidation_reasons_with_time_in_iso_format: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def invalidation_reasons_with_endtime_constraint(
+        invalidation_reasons_with_time_in_iso_format: list[DataInvalidationReasons]
+) -> list[DataInvalidationReasons]:
     return invalidation_reasons_with_time_in_iso_format[:2]
 
 
