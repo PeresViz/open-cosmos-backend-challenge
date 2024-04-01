@@ -6,5 +6,4 @@ async def authenticate_user(api_key: str):
         return "admin"
     elif api_key == "user_api_key":
         return "user"
-    else:
-        raise HTTPException(status_code=401, detail="Invalid API key")
+    raise HTTPException(status_code=401, detail="Invalid API key")
