@@ -30,6 +30,7 @@ class RedisDataStorage(AbstractDataStorage):
     def get_reasons_for_invalid_data(self) -> list[Optional[dict[str, Any]]]:
         discard_reasons = self.redis_client.hgetall(REDIS_DISCARD_REASONS_HASH_KEY)
         reasons_list = []
-        for time, reasons in discard_reasons.items():
-            reasons_list.append({"time": time.decode(), "reasons": eval(reasons)})
+        if discard_reasons:
+            for time, reasons in discard_reasons.items():
+                reasons_list.append({"time": time.decode(), "reasons": eval(reasons)})
         return reasons_list
