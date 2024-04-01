@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 from abc import ABC, abstractmethod
 
@@ -10,7 +10,7 @@ class AbstractDataStorage(ABC):
         ...
 
     @abstractmethod
-    def get_data(self) -> list[dict[str, Any]]:
+    def get_data(self) -> list[Optional[dict[str, Any]]]:
         ...
 
     @abstractmethod
@@ -18,5 +18,5 @@ class AbstractDataStorage(ABC):
         ...
 
     @abstractmethod
-    def get_reasons_for_invalid_data(self) -> list[dict[str, Any]]:
+    def get_reasons_for_invalid_data(self) -> list[Optional[dict[str, Any]]]:
         ...

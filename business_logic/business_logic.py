@@ -8,6 +8,8 @@ from business_logic.constants import (
     REASON_DATA_IS_TOO_OLD,
     REASON_DATA_IS_SYSTEM_OR_SUSPECT,
 )
+from models.data import Data
+from models.data_invalidation_reasons import DataInvalidationReasons
 
 
 class BusinessLogic:
@@ -22,14 +24,33 @@ class BusinessLogic:
             if invalid_data:
                 self.data_storage.save_reasons_for_invalid_data(invalid_data)
 
-    def get_data(self, start_time: datetime = None, end_time: datetime = None) -> list[Optional[dict[str, Any]]]:
+    def get_data(self, start_time: datetime = None, end_time: datetime = None) -> list[Optional[Data]]:
         data = self.data_storage.get_data()
-        return self.__apply_time_filter_to_data(data=data, start_time=start_time, end_time=end_time) if data else []
+        data_with_time_filter = self.__apply_time_filter_to_data(
+            data=data,
+            start_time=start_time,
+            end_time=end_time
+        )
+        return [
+            Data(time=d['time'], value=d['value'], tags=d['tags'])
+            for d in data_with_time_filter
+        ]
 
-    def get_reasons_for_invalid_data(self, start_time: datetime = None, end_time: datetime = None) -> list[Optional[dict[str, Any]]]:
+    def get_reasons_for_invalid_data(
+            self,
+            start_time: datetime = None,
+            end_time: datetime = None
+    ) -> list[Optional[DataInvalidationReasons]]:
         discard_reasons = self.data_storage.get_reasons_for_invalid_data()
-        return self.__apply_time_filter_to_data(data=discard_reasons, start_time=start_time, end_time=end_time) \
-            if discard_reasons else []
+        discard_reasons_with_time_filter = self.__apply_time_filter_to_data(
+            data=discard_reasons,
+            start_time=start_time,
+            end_time=end_time
+        )
+        return [
+            DataInvalidationReasons(time=d['time'], reasons=d['reasons'])
+            for d in discard_reasons_with_time_filter
+        ]
 
     def __invalidate_data(self, data: dict[str, Any]) -> dict[str, Any]:
         reasons = []
