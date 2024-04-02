@@ -3,8 +3,8 @@ import pytest
 from typing import Any
 import json
 
-from infrastructure.data.redis_data_storage import RedisDataStorage
-from infrastructure.data.constants import REDIS_DATA_HASH_KEY, REDIS_DISCARD_REASONS_HASH_KEY
+from infrastructure.data.storage.redis.redis_data_storage import RedisDataStorage
+from infrastructure.data.storage.redis.constants import REDIS_DATA_HASH_KEY, REDIS_DISCARD_REASONS_HASH_KEY
 
 
 @pytest.fixture
