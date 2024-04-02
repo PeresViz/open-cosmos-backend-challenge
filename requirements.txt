@@ -4,6 +4,7 @@ attrs==23.2.0
 certifi==2024.2.2
 charset-normalizer==3.3.2
 click==8.1.7
+dnspython==2.6.1
 fastapi==0.110.0
 h11==0.14.0
 httpcore==1.0.5
@@ -17,6 +18,7 @@ pluggy==1.4.0
 py==1.11.0
 pydantic==2.6.4
 pydantic_core==2.16.3
+pymongo==4.6.3
 pytest==7.1.2
 pytest-lazy-fixture==0.6.3
 python-dotenv==1.0.1
