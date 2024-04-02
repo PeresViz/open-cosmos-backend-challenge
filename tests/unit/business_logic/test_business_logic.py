@@ -1,4 +1,5 @@
 import pytest
+import struct
 from unittest.mock import MagicMock, patch
 from typing import Any
 from datetime import datetime, timedelta
@@ -43,11 +44,20 @@ def invalidation_reasons_with_time_in_iso_format(
     return [DataInvalidationReasons(time=d['time'], reasons=d['reasons']) for d in data]
 
 
+def change_time_and_value_format(data_dict: dict[str, Any]) -> dict[str, Any]:
+    byte_value = bytes(data_dict["value"])
+    decoded_value = struct.unpack('<f', byte_value)[0]
+    return {
+        **data_dict,
+        "time": datetime.fromtimestamp(data_dict["time"]).isoformat(),
+        "value": decoded_value
+    }
+
+
 @pytest.fixture
 def data_with_time_in_iso_format(server_data: list[dict[str, Any]]) -> list[Data]:
-    change_time_format = lambda d: {**d, "time": datetime.fromtimestamp(d["time"]).isoformat()}
-    data = list(map(change_time_format, server_data))
-    return [Data(time=d['time'], value=d['value'], tags=d['tags']) for d in data]
+    modified_data = [change_time_and_value_format(d) for d in server_data]
+    return [Data(time=d['time'], value=d['value'], tags=d['tags']) for d in modified_data]
 
 
 @pytest.fixture
@@ -70,9 +80,8 @@ class TestBusinessLogic:
             business_logic: BusinessLogic
     ):
         # Arrange
-        server_data = {"time": datetime.now().timestamp(), "value":[184, 240, 52, 191], "tags":[]}
+        server_data = {"time": datetime.now().timestamp(), "value": [184, 240, 52, 191], "tags": []}
         fetch_data_from_server_mock.return_value = server_data
-
 
         # Act
         business_logic.fetch_data_from_server()
@@ -89,10 +98,9 @@ class TestBusinessLogic:
     ):
         # Arrange
         data_time = (datetime.now() - timedelta(hours=2)).timestamp()
-        server_data = {"time": data_time, "value":[184,240,52,191],"tags":[]}
+        server_data = {"time": data_time, "value": [184, 240, 52, 191], "tags": []}
         invalidation_reasons = {"time": data_time, "reasons": [REASON_DATA_IS_TOO_OLD]}
         fetch_data_from_server_mock.return_value = server_data
-
 
         # Act
         business_logic.fetch_data_from_server()
@@ -109,7 +117,6 @@ class TestBusinessLogic:
     ):
         # Arrange
         fetch_data_from_server_mock.return_value = {}
-
 
         # Act
         business_logic.fetch_data_from_server()
@@ -203,4 +210,3 @@ class TestBusinessLogic:
         # Assert
         assert data == return_data
         business_logic.data_storage.get_reasons_for_invalid_data.assert_called_once()
-
