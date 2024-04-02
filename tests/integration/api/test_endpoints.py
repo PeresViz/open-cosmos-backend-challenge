@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 from api.endpoints import app
+from api.constants import DATA_ENDPOINT, DATA_INVALIDATION_REASONS_ENDPOINT
 
 client = TestClient(app)
 
@@ -10,7 +11,7 @@ class TestEndpoints:
         # Arrange
 
         # Act
-        response = client.get("/data")
+        response = client.get(f"/{DATA_ENDPOINT}")
 
         # Assert
         assert response.status_code == 422
@@ -23,7 +24,7 @@ class TestEndpoints:
         expected_keys = {"time", "value", "tags"}
 
         # Act
-        response = client.get("/data?api_key=user_api_key")
+        response = client.get(f"/{DATA_ENDPOINT}?api_key=user_api_key")
 
         # Assert
         response_in_json = response.json()
@@ -40,7 +41,7 @@ class TestEndpoints:
         # Arrange
 
         # Act
-        response = client.get("/data?api_key=invalid_api_key")
+        response = client.get(f"/{DATA_ENDPOINT}?api_key=invalid_api_key")
 
         # Assert
         assert response.status_code == 401
@@ -51,7 +52,7 @@ class TestEndpoints:
         # Arrange
 
         # Act
-        response = client.get("/discard_reasons")
+        response = client.get(f"/{DATA_INVALIDATION_REASONS_ENDPOINT}")
 
         # Assert
         assert response.status_code == 422
@@ -63,7 +64,7 @@ class TestEndpoints:
         # Arrange
 
         # Act
-        response = client.get("/discard_reasons?api_key=user_api_key")
+        response = client.get(f"/{DATA_INVALIDATION_REASONS_ENDPOINT}?api_key=user_api_key")
 
         # Assert
         assert response.status_code == 403
@@ -75,7 +76,7 @@ class TestEndpoints:
         expected_keys = {"time", "reasons"}
 
         # Act
-        response = client.get("/discard_reasons?api_key=admin_api_key")
+        response = client.get(f"/{DATA_INVALIDATION_REASONS_ENDPOINT}?api_key=admin_api_key")
 
         # Assert
         response_in_json = response.json()
