@@ -6,8 +6,8 @@ from business_logic.business_logic_factory import BusinessLogicFactory
 
 class TestBusinessLogicFactory:
     @staticmethod
-    @patch("business_logic.business_logic_factory.RedisDataStorage")
-    def test_instantiate_business_logic(redis_data_storage_mock: MagicMock):
+    @patch("business_logic.business_logic_factory.MongoDBDataStorage")
+    def test_instantiate_business_logic(mongodb_data_storage_mock: MagicMock):
         # Arrange
 
         # Act
@@ -15,4 +15,4 @@ class TestBusinessLogicFactory:
 
         # Assert
         assert isinstance(business_logic, BusinessLogic)
-        assert business_logic.data_storage == redis_data_storage_mock()
+        assert business_logic.data_storage == mongodb_data_storage_mock()
