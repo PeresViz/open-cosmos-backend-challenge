@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class Data(BaseModel):
     time: str
-    value: list[int]
+    value: float
     tags: list[str]
 
 
