@@ -33,7 +33,7 @@ class TestEndpoints:
         for element in response_in_json:
             assert set(element.keys()) == expected_keys
             assert type(element["time"]) == str
-            assert isinstance(element['value'], list) and all(isinstance(item, int) for item in element['value'])
+            assert isinstance(element['value'], float)
             assert isinstance(element['tags'], list) and all(isinstance(item, str) for item in element['tags'])
 
     @staticmethod
@@ -81,6 +81,116 @@ class TestEndpoints:
         # Assert
         response_in_json = response.json()
         assert response.status_code == 200
+        assert isinstance(response_in_json, list)
+        for element in response_in_json:
+            assert set(element.keys()) == expected_keys
+            assert type(element["time"]) == str
+            assert isinstance(element['reasons'], list) and all(isinstance(item, str) for item in element['reasons'])
+
+    @staticmethod
+    def test_get_data_only_start_time_given():
+        # Arrange
+        expected_keys = {"time", "value", "tags"}
+
+        # Act
+        response = client.get(f"/{DATA_ENDPOINT}?api_key=user_api_key&start_time=2024-04-01T00:00:00")
+
+        # Assert
+        assert response.status_code == 200
+        response_in_json = response.json()
+        assert isinstance(response_in_json, list)
+        for element in response_in_json:
+            assert set(element.keys()) == expected_keys
+            assert type(element["time"]) == str
+            assert isinstance(element['value'], float)
+            assert isinstance(element['tags'], list) and all(isinstance(item, str) for item in element['tags'])
+
+    @staticmethod
+    def test_get_data_only_end_time_given():
+        # Arrange
+        expected_keys = {"time", "value", "tags"}
+
+        # Act
+        response = client.get(f"/{DATA_ENDPOINT}?api_key=user_api_key&end_time=2024-04-02T00:00:00")
+
+        # Assert
+        assert response.status_code == 200
+        response_in_json = response.json()
+        assert isinstance(response_in_json, list)
+        for element in response_in_json:
+            assert set(element.keys()) == expected_keys
+            assert type(element["time"]) == str
+            assert isinstance(element['value'], float)
+            assert isinstance(element['tags'], list) and all(isinstance(item, str) for item in element['tags'])
+
+    @staticmethod
+    def test_get_data_both_start_and_end_time_given():
+        # Arrange
+        expected_keys = {"time", "value", "tags"}
+
+        # Act
+        response = client.get(f"/{DATA_ENDPOINT}?api_key=user_api_key"
+                              f"&start_time=2024-04-01T00:00:00&end_time=2024-04-02T00:00:00")
+
+        # Assert
+        assert response.status_code == 200
+        response_in_json = response.json()
+        assert isinstance(response_in_json, list)
+        for element in response_in_json:
+            assert set(element.keys()) == expected_keys
+            assert type(element["time"]) == str
+            assert isinstance(element['value'], float)
+            assert isinstance(element['tags'], list) and all(isinstance(item, str) for item in element['tags'])
+
+
+    @staticmethod
+    def test_get_discard_data_only_start_time_given():
+        # Arrange
+        expected_keys = {"time", "reasons"}
+
+        # Act
+        response = client.get(f"/{DATA_INVALIDATION_REASONS_ENDPOINT}?api_key=admin_api_key"
+                              f"&start_time=2024-04-01T00:00:00")
+
+        # Assert
+        assert response.status_code == 200
+        response_in_json = response.json()
+        assert isinstance(response_in_json, list)
+        for element in response_in_json:
+            assert set(element.keys()) == expected_keys
+            assert type(element["time"]) == str
+            assert isinstance(element['reasons'], list) and all(isinstance(item, str) for item in element['reasons'])
+
+    @staticmethod
+    def test_get_discard_data_only_end_time_given():
+        # Arrange
+        expected_keys = {"time", "reasons"}
+
+        # Act
+        response = client.get(f"/{DATA_INVALIDATION_REASONS_ENDPOINT}?api_key=admin_api_key"
+                              f"&end_time=2024-04-02T00:00:00")
+
+        # Assert
+        assert response.status_code == 200
+        response_in_json = response.json()
+        assert isinstance(response_in_json, list)
+        for element in response_in_json:
+            assert set(element.keys()) == expected_keys
+            assert type(element["time"]) == str
+            assert isinstance(element['reasons'], list) and all(isinstance(item, str) for item in element['reasons'])
+
+    @staticmethod
+    def test_get_discard_data_both_start_and_end_time_given():
+        # Arrange
+        expected_keys = {"time", "reasons"}
+
+        # Act
+        response = client.get(f"/{DATA_INVALIDATION_REASONS_ENDPOINT}?api_key=admin_api_key"
+                              f"&start_time=2024-04-01T00:00:00&end_time=2024-04-02T00:00:00")
+
+        # Assert
+        assert response.status_code == 200
+        response_in_json = response.json()
         assert isinstance(response_in_json, list)
         for element in response_in_json:
             assert set(element.keys()) == expected_keys
