@@ -11,7 +11,6 @@ from infrastructure.data.storage.mongodb.constants import (
 
 class MongoDBDataStorage(AbstractDataStorage):
     def __init__(self):
-        print(f"MONGODB CONNECTION STRING: {MONGODB_CONNECTION_STRING}")
         self.client = pymongo.MongoClient(MONGODB_CONNECTION_STRING)
         self.db = self.client[MONGODB_DATABASE_NAME]
         self.data_collection = self.db[MONGODB_DATA_COLLECTION_NAME]
