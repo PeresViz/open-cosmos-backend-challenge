@@ -1,6 +1,7 @@
 from typing import Any, Optional
+import struct
 from datetime import datetime, timedelta
-from infrastructure.data.abstract_data_storage import AbstractDataStorage
+from infrastructure.data.storage.abstract_data_storage import AbstractDataStorage
 from infrastructure.clients.external_data_service import ExternalDataService
 from business_logic.constants import (
     SYSTEM_TAG,
@@ -26,6 +27,7 @@ class BusinessLogic:
 
     def get_data(self, start_time: datetime = None, end_time: datetime = None) -> list[Optional[Data]]:
         data = self.data_storage.get_data()
+        data = self.__decode_value(data=data)
         data_with_time_filter = self.__apply_time_filter_to_data(
             data=data,
             start_time=start_time,
@@ -104,5 +106,18 @@ class BusinessLogic:
     @staticmethod
     def __unix_timestamp_to_iso8601_timestamp(unix_timestamp: int):
         return datetime.fromtimestamp(unix_timestamp).isoformat()
+
+    @staticmethod
+    def __decode_value(data: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        for d in data:
+            # Convert the array of bytes to bytes object
+            byte_value = bytes(d["value"])
+
+            # Decode the bytes as a little-endian 32-bit float
+            decoded_value = struct.unpack('<f', byte_value)[0]
+
+            d['value'] = decoded_value
+        return data
+
 
 

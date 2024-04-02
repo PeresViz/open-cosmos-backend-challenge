@@ -1,9 +1,8 @@
 import redis
-import struct
 import json
 from typing import Any, Optional
-from infrastructure.data.abstract_data_storage import AbstractDataStorage
-from infrastructure.data.constants import (
+from infrastructure.data.storage.abstract_data_storage import AbstractDataStorage
+from infrastructure.data.storage.redis.constants import (
     REDIS_HOST,
     REDIS_PORT,
     REDIS_DB_NUMBER,
@@ -21,19 +20,8 @@ class RedisDataStorage(AbstractDataStorage):
 
     def get_data(self) -> list[Optional[dict[str, Any]]]:
         data = self.redis_client.hgetall(REDIS_DATA_HASH_KEY)
-        all_data = []
         if data:
-            for data_values in data.values():
-                data_json = json.loads(data_values)
-
-                # Convert the array of bytes to bytes object
-                byte_value = bytes(data_json["value"])
-
-                # Decode the bytes as a little-endian 32-bit float
-                decoded_value = struct.unpack('<f', byte_value)[0]
-
-                data_json['value'] = decoded_value
-                all_data.append(data_json)
+            return [json.loads(data_value) for data_value in data.values()]
         return []
 
     def save_reasons_for_invalid_data(self, discard_reasons: dict[str, Any]) -> None:
