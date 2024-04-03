@@ -1,0 +1,2 @@
+class FailureRetrievingInvalidDataReasonsException(Exception):
+    pass

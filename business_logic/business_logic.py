@@ -10,6 +10,10 @@ from business_logic.constants import (
     REASON_DATA_IS_TOO_OLD,
     REASON_DATA_IS_SYSTEM_OR_SUSPECT,
 )
+from business_logic.exceptions.failure_retrieving_data \
+    import FailureRetrievingData
+from business_logic.exceptions.failure_retrieving_invalid_data_reasons_exception \
+    import FailureRetrievingInvalidDataReasonsException
 from models.data import Data
 from models.data_invalidation_reasons import DataInvalidationReasons
 
@@ -41,7 +45,7 @@ class BusinessLogic:
 
     def get_data(self, start_time: datetime = None, end_time: datetime = None) -> list[Optional[Data]]:
         try:
-            self.logger.info(f"Retrieving data from {type(self.data_storage).__name__}...")
+            self.logger.info("Retrieving data...")
             data = self.data_storage.get_data()
 
             data = self.__decode_value(data=data)
@@ -52,14 +56,16 @@ class BusinessLogic:
                 end_time=end_time
             )
 
-            self.logger.info(f"Data retrieved successfully from {type(self.data_storage).__name__}")
+            self.logger.info("Data retrieved successfully")
             return [
                 Data(time=d['time'], value=d['value'], tags=d['tags'])
                 for d in data_with_time_filter
             ]
         except Exception as e:
-            self.logger.error(f"Error retrieving data from {type(self.data_storage).__name__}: {e}")
-            return []
+            self.logger.error(f"Error retrieving data: {e}")
+            raise FailureRetrievingData(
+                f"Error retrieving data: {e}"
+            )
 
     def get_reasons_for_invalid_data(
             self,
@@ -67,9 +73,11 @@ class BusinessLogic:
             end_time: datetime = None
     ) -> list[Optional[DataInvalidationReasons]]:
         try:
-            self.logger.info(f"Retrieving reasons for invalid data from {type(self.data_storage).__name__}...")
+            self.logger.info("Retrieving reasons for invalid data...")
 
             discard_reasons = self.data_storage.get_reasons_for_invalid_data()
+
+            discard_reasons = self.__decode_value(data=discard_reasons)
 
             discard_reasons_with_time_filter = self.__apply_time_filter_to_data(
                 data=discard_reasons,
@@ -77,14 +85,16 @@ class BusinessLogic:
                 end_time=end_time
             )
 
-            self.logger.info(f"Reasons for invalid data retrieved successfully from {type(self.data_storage).__name__}")
+            self.logger.info("Reasons for invalid data retrieved successfully")
             return [
-                DataInvalidationReasons(time=d['time'], reasons=d['reasons'])
+                DataInvalidationReasons(time=d['time'], value=d['value'], tags=d['tags'], reasons=d['reasons'])
                 for d in discard_reasons_with_time_filter
             ]
         except Exception as e:
-            self.logger.error(f"Error retrieving reasons for invalid data from {type(self.data_storage).__name__}: {e}")
-            return []
+            self.logger.error(f"Error retrieving reasons for invalid data: {e}")
+            raise FailureRetrievingInvalidDataReasonsException(
+                f"Error retrieving reasons for invalid data: {e}"
+            )
 
     def __invalidate_data(self, data: dict[str, Any]) -> dict[str, Any]:
         reasons = []
@@ -95,7 +105,8 @@ class BusinessLogic:
         if self.__is_data_system_or_suspect(data_tags=data['tags']):
             reasons.append(REASON_DATA_IS_SYSTEM_OR_SUSPECT)
 
-        return {"time": data['time'], "reasons": reasons} if reasons else {}
+        return {"time": data['time'], "value": data["value"], "tags": data["tags"], "reasons": reasons} \
+            if reasons else {}
 
     def __apply_time_filter_to_data(
             self,

@@ -1,6 +1,5 @@
-from pydantic import BaseModel
+from models.data import Data
 
 
-class DataInvalidationReasons(BaseModel):
-    time: str
+class DataInvalidationReasons(Data):
     reasons: list[str]

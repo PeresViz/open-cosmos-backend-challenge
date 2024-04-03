@@ -1,0 +1,2 @@
+class FailureRetrievingData(Exception):
+    pass

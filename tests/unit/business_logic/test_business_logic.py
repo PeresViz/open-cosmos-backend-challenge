@@ -7,6 +7,9 @@ from pytest_lazyfixture import lazy_fixture
 
 from business_logic.business_logic import BusinessLogic
 from business_logic.constants import REASON_DATA_IS_TOO_OLD, SUSPECT_TAG, SYSTEM_TAG, REASON_DATA_IS_SYSTEM_OR_SUSPECT
+from business_logic.exceptions.failure_retrieving_invalid_data_reasons_exception \
+    import FailureRetrievingInvalidDataReasonsException
+from business_logic.exceptions.failure_retrieving_data import FailureRetrievingData
 from models.data import Data
 from models.data_invalidation_reasons import DataInvalidationReasons
 
@@ -29,9 +32,24 @@ def server_data() -> list[dict[str, Any]]:
 @pytest.fixture
 def invalidation_reasons() -> list[dict[str, Any]]:
     return [
-        {"time": 1711644871, "reasons": [REASON_DATA_IS_TOO_OLD]},
-        {"time": 1711644891, "reasons": [REASON_DATA_IS_SYSTEM_OR_SUSPECT]},
-        {"time": 1711644991, "reasons": [REASON_DATA_IS_TOO_OLD, REASON_DATA_IS_SYSTEM_OR_SUSPECT]},
+        {
+            "time": 1711644871,
+            "value": [68, 51, 127, 191],
+            "tags": [],
+            "reasons": [REASON_DATA_IS_TOO_OLD]
+        },
+        {
+            "time": 1711644891,
+            "value": [68, 51, 127, 191],
+            "tags": [SYSTEM_TAG],
+            "reasons": [REASON_DATA_IS_SYSTEM_OR_SUSPECT]
+        },
+        {
+            "time": 1711644991,
+            "value": [68, 51, 127, 191],
+            "tags": [SUSPECT_TAG, SYSTEM_TAG],
+            "reasons": [REASON_DATA_IS_TOO_OLD, REASON_DATA_IS_SYSTEM_OR_SUSPECT]
+        },
     ]
 
 
@@ -39,9 +57,13 @@ def invalidation_reasons() -> list[dict[str, Any]]:
 def invalidation_reasons_with_time_in_iso_format(
         invalidation_reasons: list[dict[str, Any]]
 ) -> list[DataInvalidationReasons]:
-    change_time_format = lambda d: {**d, "time": datetime.fromtimestamp(d["time"]).isoformat()}
-    data = list(map(change_time_format, invalidation_reasons))
-    return [DataInvalidationReasons(time=d['time'], reasons=d['reasons']) for d in data]
+    modified_data = [change_time_and_value_format(d) for d in invalidation_reasons]
+    return [DataInvalidationReasons(
+        time=d['time'],
+        value=d['value'],
+        tags=d['tags'],
+        reasons=d['reasons']
+    ) for d in modified_data]
 
 
 def change_time_and_value_format(data_dict: dict[str, Any]) -> dict[str, Any]:
@@ -129,7 +151,7 @@ class TestBusinessLogic:
         business_logic.logger = get_logger_mock
         data_time = (datetime.now() - timedelta(hours=2)).timestamp()
         server_data = {"time": data_time, "value": [184, 240, 52, 191], "tags": []}
-        invalidation_reasons = {"time": data_time, "reasons": [REASON_DATA_IS_TOO_OLD]}
+        invalidation_reasons = {"time": data_time, "value": [184, 240, 52, 191], "tags": [], "reasons": [REASON_DATA_IS_TOO_OLD]}
         fetch_data_from_server_mock.return_value = server_data
 
         # Act
@@ -176,16 +198,16 @@ class TestBusinessLogic:
     ):
         # Arrange
         business_logic.logger = get_logger_mock
-        business_logic.data_storage.get_data = MagicMock(side_effect=Exception("An error occurred"))
+        business_logic.data_storage.get_data.side_effect = FailureRetrievingData("An error occurred")
 
         # Act
-        returned_data = business_logic.get_data()
+        with pytest.raises(FailureRetrievingData):
+            business_logic.get_data()
 
         # Assert
-        assert returned_data == []
         business_logic.data_storage.get_data.assert_called_once()
         business_logic.logger.error.assert_called_once_with(
-            f"Error retrieving data from {type(business_logic.data_storage).__name__}: An error occurred"
+            "Error retrieving data: An error occurred"
         )
 
     @staticmethod
@@ -235,8 +257,8 @@ class TestBusinessLogic:
         business_logic.data_storage.get_data.assert_called_once()
         business_logic.logger.info.assert_has_calls(
             [
-                call(f"Retrieving data from {type(business_logic.data_storage).__name__}..."),
-                call(f"Data retrieved successfully from {type(business_logic.data_storage).__name__}")
+                call("Retrieving data..."),
+                call("Data retrieved successfully")
             ]
         )
         business_logic.logger.error.assert_not_called()
@@ -249,16 +271,17 @@ class TestBusinessLogic:
     ):
         # Arrange
         business_logic.logger = get_logger_mock
-        business_logic.data_storage.get_reasons_for_invalid_data = MagicMock(side_effect=Exception("An error occurred"))
+        business_logic.data_storage.get_reasons_for_invalid_data.side_effect \
+            = FailureRetrievingInvalidDataReasonsException("An error occurred")
 
         # Act
-        returned_data = business_logic.get_reasons_for_invalid_data()
+        with pytest.raises(FailureRetrievingInvalidDataReasonsException):
+            business_logic.get_reasons_for_invalid_data()
 
         # Assert
-        assert returned_data == []
         business_logic.data_storage.get_reasons_for_invalid_data.assert_called_once()
         business_logic.logger.error.assert_called_once_with(
-            f"Error retrieving reasons for invalid data from {type(business_logic.data_storage).__name__}: An error occurred"
+            "Error retrieving reasons for invalid data: An error occurred"
         )
 
     @staticmethod
@@ -308,8 +331,8 @@ class TestBusinessLogic:
         business_logic.data_storage.get_reasons_for_invalid_data.assert_called_once()
         business_logic.logger.info.assert_has_calls(
             [
-                call(f"Retrieving reasons for invalid data from {type(business_logic.data_storage).__name__}..."),
-                call(f"Reasons for invalid data retrieved successfully from {type(business_logic.data_storage).__name__}")
+                call("Retrieving reasons for invalid data..."),
+                call("Reasons for invalid data retrieved successfully")
             ]
         )
         business_logic.logger.error.assert_not_called()
