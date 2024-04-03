@@ -16,9 +16,11 @@ This service was created as part of the Open Cosmos backend challenge and addres
 ## Run the Service
 
 For you to get the service up and running you need to:
-1) clone this repository 
-2) have docker up and running
-3) run the following command in the terminal:
+1. clone this repository 
+2. have docker up and running
+3. Open a terminal window.
+4. Navigate to the directory where you cloned the repository.
+5. Run the following command:
 ```bash
 ./start_data_server.sh & docker-compose up --build
 ```
