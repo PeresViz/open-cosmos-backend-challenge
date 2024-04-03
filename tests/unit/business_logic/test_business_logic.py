@@ -1,6 +1,6 @@
 import pytest
 import struct
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 from typing import Any
 from datetime import datetime, timedelta
 from pytest_lazyfixture import lazy_fixture
@@ -75,11 +75,36 @@ def invalidation_reasons_with_endtime_constraint(
 class TestBusinessLogic:
     @staticmethod
     @patch('infrastructure.clients.external_data_service.ExternalDataService.fetch_data_from_server')
-    def test_fetch_data_from_server_when_server_returns_data_without_invalidation_reasons(
+    @patch('business_logic.business_logic.logging.getLogger')
+    def test_fetch_data_from_server_when_exception_occurs(
+            get_logger_mock: MagicMock,
             fetch_data_from_server_mock: MagicMock,
             business_logic: BusinessLogic
     ):
         # Arrange
+        business_logic.logger = get_logger_mock
+        fetch_data_from_server_mock.side_effect = Exception("An error occurred")
+
+        # Act
+        business_logic.fetch_data_from_server()
+
+        # Assert
+        business_logic.logger.info.assert_called_once_with("Fetching data from server...")
+        business_logic.data_storage.save_data.assert_not_called()
+        business_logic.data_storage.save_reasons_for_invalid_data.assert_not_called()
+        business_logic.logger.error.assert_called_once_with("Error fetching data from server: An error occurred")
+        business_logic.logger.warning.assert_not_called()
+
+    @staticmethod
+    @patch('infrastructure.clients.external_data_service.ExternalDataService.fetch_data_from_server')
+    @patch('business_logic.business_logic.logging.getLogger')
+    def test_fetch_data_from_server_when_server_returns_data_without_invalidation_reasons(
+            get_logger_mock: MagicMock,
+            fetch_data_from_server_mock: MagicMock,
+            business_logic: BusinessLogic
+    ):
+        # Arrange
+        business_logic.logger = get_logger_mock
         server_data = {"time": datetime.now().timestamp(), "value": [184, 240, 52, 191], "tags": []}
         fetch_data_from_server_mock.return_value = server_data
 
@@ -89,14 +114,19 @@ class TestBusinessLogic:
         # Assert
         business_logic.data_storage.save_data.assert_called_once_with(server_data)
         business_logic.data_storage.save_reasons_for_invalid_data.assert_not_called()
+        business_logic.logger.info.assert_has_calls([call("Fetching data from server...")])
+        business_logic.logger.error.assert_not_called()
 
     @staticmethod
     @patch('infrastructure.clients.external_data_service.ExternalDataService.fetch_data_from_server')
+    @patch('business_logic.business_logic.logging.getLogger')
     def test_fetch_data_from_server_when_server_returns_data_with_invalidation_reasons(
+            get_logger_mock: MagicMock,
             fetch_data_from_server_mock: MagicMock,
             business_logic: BusinessLogic
     ):
         # Arrange
+        business_logic.logger = get_logger_mock
         data_time = (datetime.now() - timedelta(hours=2)).timestamp()
         server_data = {"time": data_time, "value": [184, 240, 52, 191], "tags": []}
         invalidation_reasons = {"time": data_time, "reasons": [REASON_DATA_IS_TOO_OLD]}
@@ -108,14 +138,24 @@ class TestBusinessLogic:
         # Assert
         business_logic.data_storage.save_data.assert_called_once_with(server_data)
         business_logic.data_storage.save_reasons_for_invalid_data.assert_called_once_with(invalidation_reasons)
+        business_logic.logger.info.assert_has_calls(
+            [
+                call("Fetching data from server..."),
+                call("Invalid data saved with reasons.")
+            ]
+        )
+        business_logic.logger.error.assert_not_called()
 
     @staticmethod
     @patch('infrastructure.clients.external_data_service.ExternalDataService.fetch_data_from_server')
+    @patch('business_logic.business_logic.logging.getLogger')
     def test_fetch_data_from_server_when_server_returns_no_data(
+            get_logger_mock: MagicMock,
             fetch_data_from_server_mock: MagicMock,
             business_logic: BusinessLogic
     ):
         # Arrange
+        business_logic.logger = get_logger_mock
         fetch_data_from_server_mock.return_value = {}
 
         # Act
@@ -124,6 +164,29 @@ class TestBusinessLogic:
         # Assert
         business_logic.data_storage.save_data.assert_not_called()
         business_logic.data_storage.save_reasons_for_invalid_data.assert_not_called()
+        business_logic.logger.info.assert_has_calls([call("Fetching data from server...")])
+        business_logic.logger.warning.assert_has_calls([call("No data fetched from server.")])
+        business_logic.logger.error.assert_not_called()
+
+    @staticmethod
+    @patch('business_logic.business_logic.logging.getLogger')
+    def test_get_data_when_exception_occurs(
+            get_logger_mock: MagicMock,
+            business_logic: BusinessLogic
+    ):
+        # Arrange
+        business_logic.logger = get_logger_mock
+        business_logic.data_storage.get_data = MagicMock(side_effect=Exception("An error occurred"))
+
+        # Act
+        returned_data = business_logic.get_data()
+
+        # Assert
+        assert returned_data == []
+        business_logic.data_storage.get_data.assert_called_once()
+        business_logic.logger.error.assert_called_once_with(
+            f"Error retrieving data from {type(business_logic.data_storage).__name__}: An error occurred"
+        )
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -151,7 +214,9 @@ class TestBusinessLogic:
             ),
         ],
     )
-    def test_get_data(
+    @patch('business_logic.business_logic.logging.getLogger')
+    def test_get_data_on_success(
+            get_logger_mock: MagicMock,
             server_data: list[dict[str, Any]],
             return_data: list[dict[str, Any]],
             business_logic: BusinessLogic,
@@ -159,6 +224,7 @@ class TestBusinessLogic:
             end_time: datetime
     ):
         # Arrange
+        business_logic.logger = get_logger_mock
         business_logic.data_storage.get_data = MagicMock(return_value=server_data)
 
         # Act
@@ -167,6 +233,33 @@ class TestBusinessLogic:
         # Assert
         assert data == return_data
         business_logic.data_storage.get_data.assert_called_once()
+        business_logic.logger.info.assert_has_calls(
+            [
+                call(f"Retrieving data from {type(business_logic.data_storage).__name__}..."),
+                call(f"Data retrieved successfully from {type(business_logic.data_storage).__name__}")
+            ]
+        )
+        business_logic.logger.error.assert_not_called()
+
+    @staticmethod
+    @patch('business_logic.business_logic.logging.getLogger')
+    def test_get_reasons_for_invalid_data_when_exception_occurs(
+            get_logger_mock: MagicMock,
+            business_logic: BusinessLogic
+    ):
+        # Arrange
+        business_logic.logger = get_logger_mock
+        business_logic.data_storage.get_reasons_for_invalid_data = MagicMock(side_effect=Exception("An error occurred"))
+
+        # Act
+        returned_data = business_logic.get_reasons_for_invalid_data()
+
+        # Assert
+        assert returned_data == []
+        business_logic.data_storage.get_reasons_for_invalid_data.assert_called_once()
+        business_logic.logger.error.assert_called_once_with(
+            f"Error retrieving reasons for invalid data from {type(business_logic.data_storage).__name__}: An error occurred"
+        )
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -194,7 +287,9 @@ class TestBusinessLogic:
             ),
         ],
     )
-    def test_get_reasons_for_invalid_data(
+    @patch('business_logic.business_logic.logging.getLogger')
+    def test_get_reasons_for_invalid_data_on_success(
+            get_logger_mock: MagicMock,
             invalidation_reasons: list[dict[str, Any]],
             return_data: list[dict[str, Any]],
             business_logic: BusinessLogic,
@@ -202,6 +297,7 @@ class TestBusinessLogic:
             end_time: datetime
     ):
         # Arrange
+        business_logic.logger = get_logger_mock
         business_logic.data_storage.get_reasons_for_invalid_data = MagicMock(return_value=invalidation_reasons)
 
         # Act
@@ -210,3 +306,10 @@ class TestBusinessLogic:
         # Assert
         assert data == return_data
         business_logic.data_storage.get_reasons_for_invalid_data.assert_called_once()
+        business_logic.logger.info.assert_has_calls(
+            [
+                call(f"Retrieving reasons for invalid data from {type(business_logic.data_storage).__name__}..."),
+                call(f"Reasons for invalid data retrieved successfully from {type(business_logic.data_storage).__name__}")
+            ]
+        )
+        business_logic.logger.error.assert_not_called()

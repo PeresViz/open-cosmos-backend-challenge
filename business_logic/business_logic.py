@@ -1,5 +1,6 @@
 from typing import Any, Optional
 import struct
+import logging
 from datetime import datetime, timedelta
 from infrastructure.data.storage.abstract_data_storage import AbstractDataStorage
 from infrastructure.clients.external_data_service import ExternalDataService
@@ -16,43 +17,74 @@ from models.data_invalidation_reasons import DataInvalidationReasons
 class BusinessLogic:
     def __init__(self, data_storage: AbstractDataStorage):
         self.data_storage = data_storage
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        self.logger.addHandler(logging.StreamHandler())
 
     def fetch_data_from_server(self) -> None:
-        server_data = ExternalDataService.fetch_data_from_server()
-        if server_data:
-            self.data_storage.save_data(server_data)
-            invalid_data = self.__invalidate_data(server_data)
-            if invalid_data:
-                self.data_storage.save_reasons_for_invalid_data(invalid_data)
+        try:
+            self.logger.info("Fetching data from server...")
+            server_data = ExternalDataService.fetch_data_from_server()
+
+            if server_data:
+                self.data_storage.save_data(server_data)
+
+                invalid_data = self.__invalidate_data(server_data)
+
+                if invalid_data:
+                    self.data_storage.save_reasons_for_invalid_data(invalid_data)
+                    self.logger.info("Invalid data saved with reasons.")
+            else:
+                self.logger.warning("No data fetched from server.")
+        except Exception as e:
+            self.logger.error(f"Error fetching data from server: {e}")
 
     def get_data(self, start_time: datetime = None, end_time: datetime = None) -> list[Optional[Data]]:
-        data = self.data_storage.get_data()
-        data = self.__decode_value(data=data)
-        data_with_time_filter = self.__apply_time_filter_to_data(
-            data=data,
-            start_time=start_time,
-            end_time=end_time
-        )
-        return [
-            Data(time=d['time'], value=d['value'], tags=d['tags'])
-            for d in data_with_time_filter
-        ]
+        try:
+            self.logger.info(f"Retrieving data from {type(self.data_storage).__name__}...")
+            data = self.data_storage.get_data()
+
+            data = self.__decode_value(data=data)
+
+            data_with_time_filter = self.__apply_time_filter_to_data(
+                data=data,
+                start_time=start_time,
+                end_time=end_time
+            )
+
+            self.logger.info(f"Data retrieved successfully from {type(self.data_storage).__name__}")
+            return [
+                Data(time=d['time'], value=d['value'], tags=d['tags'])
+                for d in data_with_time_filter
+            ]
+        except Exception as e:
+            self.logger.error(f"Error retrieving data from {type(self.data_storage).__name__}: {e}")
+            return []
 
     def get_reasons_for_invalid_data(
             self,
             start_time: datetime = None,
             end_time: datetime = None
     ) -> list[Optional[DataInvalidationReasons]]:
-        discard_reasons = self.data_storage.get_reasons_for_invalid_data()
-        discard_reasons_with_time_filter = self.__apply_time_filter_to_data(
-            data=discard_reasons,
-            start_time=start_time,
-            end_time=end_time
-        )
-        return [
-            DataInvalidationReasons(time=d['time'], reasons=d['reasons'])
-            for d in discard_reasons_with_time_filter
-        ]
+        try:
+            self.logger.info(f"Retrieving reasons for invalid data from {type(self.data_storage).__name__}...")
+
+            discard_reasons = self.data_storage.get_reasons_for_invalid_data()
+
+            discard_reasons_with_time_filter = self.__apply_time_filter_to_data(
+                data=discard_reasons,
+                start_time=start_time,
+                end_time=end_time
+            )
+
+            self.logger.info(f"Reasons for invalid data retrieved successfully from {type(self.data_storage).__name__}")
+            return [
+                DataInvalidationReasons(time=d['time'], reasons=d['reasons'])
+                for d in discard_reasons_with_time_filter
+            ]
+        except Exception as e:
+            self.logger.error(f"Error retrieving reasons for invalid data from {type(self.data_storage).__name__}: {e}")
+            return []
 
     def __invalidate_data(self, data: dict[str, Any]) -> dict[str, Any]:
         reasons = []
