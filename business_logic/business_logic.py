@@ -18,7 +18,7 @@ class BusinessLogic:
     def __init__(self, data_storage: AbstractDataStorage):
         self.data_storage = data_storage
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.DEBUG)
         self.logger.addHandler(logging.StreamHandler())
 
     def fetch_data_from_server(self) -> None:
