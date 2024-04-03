@@ -1,11 +1,12 @@
 import requests
+import os
 from fastapi import HTTPException
 
 
 class ExternalDataService:
     @staticmethod
     def fetch_data_from_server():
-        url = "http://localhost:28462"
+        url = os.getenv("SERVICE_URL")
         response = requests.get(url)
         if response.status_code == 200:
             return response.json()

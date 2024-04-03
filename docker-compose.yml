@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:5.0
+    ports:
+      - "${MONGODB_PORT}:${MONGODB_PORT}"
+    environment:
+      MONGODB_HOST: mongodb
+      MONGODB_PORT: ${MONGODB_PORT}
+
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${FASTAPI_PORT}:${FASTAPI_PORT}"
+    depends_on:
+      - mongodb
+    environment:
+      - SERVICE_URL=http://host.docker.internal:${DATA_SERVER_PORT}
+      - MONGODB_CONNECTION_STRING=mongodb://mongodb:${MONGODB_PORT}
