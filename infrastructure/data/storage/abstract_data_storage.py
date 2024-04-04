@@ -1,4 +1,5 @@
 from typing import Any, Optional
+from datetime import datetime
 
 from abc import ABC, abstractmethod
 
@@ -10,7 +11,7 @@ class AbstractDataStorage(ABC):
         ...
 
     @abstractmethod
-    def get_data(self) -> list[Optional[dict[str, Any]]]:
+    def get_data(self, start_time: datetime = None, end_time: datetime = None) -> list[Optional[dict[str, Any]]]:
         ...
 
     @abstractmethod
@@ -18,5 +19,6 @@ class AbstractDataStorage(ABC):
         ...
 
     @abstractmethod
-    def get_reasons_for_invalid_data(self) -> list[Optional[dict[str, Any]]]:
+    def get_reasons_for_invalid_data(self, start_time: datetime = None, end_time: datetime = None) \
+            -> list[Optional[dict[str, Any]]]:
         ...

@@ -46,20 +46,14 @@ class BusinessLogic:
     def get_data(self, start_time: datetime = None, end_time: datetime = None) -> list[Optional[Data]]:
         try:
             self.logger.info("Retrieving data...")
-            data = self.data_storage.get_data()
+            data = self.data_storage.get_data(start_time=start_time, end_time=end_time)
 
             data = self.__decode_value(data=data)
 
-            data_with_time_filter = self.__apply_time_filter_to_data(
-                data=data,
-                start_time=start_time,
-                end_time=end_time
-            )
-
             self.logger.info("Data retrieved successfully")
             return [
-                Data(time=d['time'], value=d['value'], tags=d['tags'])
-                for d in data_with_time_filter
+                Data(time=self.__unix_timestamp_to_iso8601_timestamp(d['time']), value=d['value'], tags=d['tags'])
+                for d in data
             ]
         except Exception as e:
             self.logger.error(f"Error retrieving data: {e}")
@@ -75,20 +69,19 @@ class BusinessLogic:
         try:
             self.logger.info("Retrieving reasons for invalid data...")
 
-            discard_reasons = self.data_storage.get_reasons_for_invalid_data()
+            discard_reasons = self.data_storage.get_reasons_for_invalid_data(start_time=start_time, end_time=end_time)
 
             discard_reasons = self.__decode_value(data=discard_reasons)
 
-            discard_reasons_with_time_filter = self.__apply_time_filter_to_data(
-                data=discard_reasons,
-                start_time=start_time,
-                end_time=end_time
-            )
-
             self.logger.info("Reasons for invalid data retrieved successfully")
             return [
-                DataInvalidationReasons(time=d['time'], value=d['value'], tags=d['tags'], reasons=d['reasons'])
-                for d in discard_reasons_with_time_filter
+                DataInvalidationReasons(
+                    time=self.__unix_timestamp_to_iso8601_timestamp(d['time']),
+                    value=d['value'],
+                    tags=d['tags'],
+                    reasons=d['reasons']
+                )
+                for d in discard_reasons
             ]
         except Exception as e:
             self.logger.error(f"Error retrieving reasons for invalid data: {e}")
@@ -107,36 +100,6 @@ class BusinessLogic:
 
         return {"time": data['time'], "value": data["value"], "tags": data["tags"], "reasons": reasons} \
             if reasons else {}
-
-    def __apply_time_filter_to_data(
-            self,
-            data: list[dict[str, Any]],
-            start_time: datetime = None,
-            end_time: datetime = None
-    ) -> list[dict[str, Any]]:
-        filtered_data = []
-
-        for d in data:
-            d['time'] = int(d['time'])
-            if self.__is_timestamp_within_time_range(
-                timestamp=d['time'],
-                start_time=start_time,
-                end_time=end_time
-            ):
-                d['time'] = self.__unix_timestamp_to_iso8601_timestamp(unix_timestamp=d['time'])
-                filtered_data.append(d)
-
-        return filtered_data
-
-    @staticmethod
-    def __is_timestamp_within_time_range(
-            timestamp: int,
-            start_time: datetime = None,
-            end_time: datetime = None
-    ) -> bool:
-        return (start_time is None or timestamp >= start_time.timestamp()) \
-               and \
-               (end_time is None or timestamp <= end_time.timestamp())
 
     @staticmethod
     def __is_data_too_old(timestamp: int) -> bool:
