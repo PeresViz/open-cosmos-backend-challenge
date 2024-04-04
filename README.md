@@ -19,7 +19,7 @@ This service was created as part of the Open Cosmos backend challenge and addres
     - data points generated within a set datetime range
 - There are no requirements around the method of access.
 
-## Run the Service
+## Run the service
 
 Before you run the service make sure you have ports 8000, 28462, and 27017 available in your system.
 They will be used by the three different services of the main service.
@@ -110,7 +110,7 @@ to see why some data was eventually invalidated.
 3. If the user has permissions to see the data invalidation reasons, this information is retrieved
 from MongoDB and showed to the user. If not, it will appear the message **Insufficient permissions**
 
-## Main Technical decisions
+## Main technical decisions
 - I decided not to have the service fetching data from the data-sever constantly.
 This decision was made to avoid overloading the service with potential unnecessary requests.
 And since the user of the service only needs to see the data when he/she calls the endpoint, 
@@ -138,7 +138,7 @@ It is implemented with API key. The client should provide an api_key in the head
 the request
 
 
-## Next Steps
+## Next steps
 As far as immediate next steps I would say:
 
 
