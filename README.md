@@ -127,7 +127,7 @@ the request
 
 
 ## Next Steps
-As far of immediate next steps I would say:
+As far as immediate next steps I would say:
 
 
 1. **Enhance RBAC Implementation**: Consider changing the Role-Based Access Control (RBAC) implementation to a more secure and robust approach. In an ideal scenario, the `api_key` should be provided to the client upon login and then passed in subsequent requests through the header. It was assumed that the service of this repository would be integrated into a larger application where the login endpoint is implemented, allowing it to return an `api_key` for the user. Future improvements to the RBAC should take this into consideration to enhance security and access control mechanisms.
