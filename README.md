@@ -11,7 +11,13 @@ This service was created as part of the Open Cosmos backend challenge and addres
   - Data whose timestamp is "too old" should be treated as invalid and discarded. "Too old" means the data are timestamped more than 1 hour previous to the current time.
   - The server does some basic analysis on the data and adds tags which both describe the data and possibly the outcomes of the analysis. Data internal to the system are tagged with "system" and should be discarded. If the server believes the data to be inaccurate, it will tag those data points with "suspect". Potentially inaccurate data should be discarded.
   - It must be possible for an administrator of the service, but not necessarily the end user of the service (/API), to discover which data points have been discarded and why they were discarded.
-- Allow access to the stored data from the service with some filters described below; there are no requirements around the method of access.
+- Allow access to the stored data from the service with some filters described below: 
+  - users must be able to access 
+    - all data points 
+    - data points generated after a certain datetime 
+    - data points generated before a certain datetime 
+    - data points generated within a set datetime range
+- There are no requirements around the method of access.
 
 ## Run the Service
 
@@ -61,6 +67,11 @@ For the GET /data endpoint you can use "user_api_key" or "admin_api_key" as the 
 
 For the GET /data_invalidation_reasons you can only use "admin_api_key". 
 If you try to type "user_api_key" for this endpoint you'll get an error saying you have "Insuficient permissions"
+
+
+For both endpoints you can also provide a **start_time** and/or an **end_time** to filter data.
+These are optional parameters.
+You should provide the start_time and the end_time in the following format: **YYYY-MM-DD hh:mm:ss**
 
 
 ## Service structure
@@ -133,5 +144,5 @@ As far as immediate next steps I would say:
 
 1. **Enhance RBAC Implementation**: Consider changing the Role-Based Access Control (RBAC) implementation to a more secure and robust approach. In an ideal scenario, the `api_key` should be provided to the client upon login and then passed in subsequent requests through the header. It was assumed that the service of this repository would be integrated into a larger application where the login endpoint is implemented, allowing it to return an `api_key` for the user. Future improvements to the RBAC should take this into consideration to enhance security and access control mechanisms.
 
-2. **Flexible Data Storage Configuration**: Explore the possibility of reading the data storage system configuration from environment variables. This would allow for the flexibility to use different data storage solutions depending on the environment in which this service is deployed. By decoupling the data storage configuration from the codebase, the service can seamlessly adapt to various deployment environments without requiring code modifications.
+2. **Flexible Data Storage Configuration**: Explore the possibility of reading the data storage system configuration from environment variables. This would allow for the flexibility to use different data storage solutions depending on the environment in which this service is deployed. By decoupling the data storage configuration from the codebase, the service can easily adapt to various deployment environments without requiring code modifications.
 
