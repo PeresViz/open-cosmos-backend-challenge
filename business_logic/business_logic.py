@@ -8,7 +8,8 @@ from business_logic.constants import (
     SYSTEM_TAG,
     SUSPECT_TAG,
     REASON_DATA_IS_TOO_OLD,
-    REASON_DATA_IS_SYSTEM_OR_SUSPECT,
+    REASON_DATA_IS_INTERNAL_TO_SYSTEM,
+    REASON_DATA_IS_INACCURATE,
 )
 from business_logic.exceptions.failure_retrieving_data \
     import FailureRetrievingData
@@ -95,8 +96,11 @@ class BusinessLogic:
         if self.__is_data_too_old(timestamp=data['time']):
             reasons.append(REASON_DATA_IS_TOO_OLD)
 
-        if self.__is_data_system_or_suspect(data_tags=data['tags']):
-            reasons.append(REASON_DATA_IS_SYSTEM_OR_SUSPECT)
+        if self.__is_data_internal_to_system(data_tags=data['tags']):
+            reasons.append(REASON_DATA_IS_INTERNAL_TO_SYSTEM)
+
+        if self.__is_data_potentially_inaccurate(data_tags=data['tags']):
+            reasons.append(REASON_DATA_IS_INACCURATE)
 
         return {"time": data['time'], "value": data["value"], "tags": data["tags"], "reasons": reasons} \
             if reasons else {}
@@ -106,8 +110,12 @@ class BusinessLogic:
         return timestamp < (datetime.now() - timedelta(hours=1)).timestamp()
 
     @staticmethod
-    def __is_data_system_or_suspect(data_tags: list[str]) -> bool:
-        return SYSTEM_TAG in data_tags or SUSPECT_TAG in data_tags
+    def __is_data_internal_to_system(data_tags: list[str]) -> bool:
+        return SYSTEM_TAG in data_tags
+
+    @staticmethod
+    def __is_data_potentially_inaccurate(data_tags: list[str]) -> bool:
+        return SUSPECT_TAG in data_tags
 
     @staticmethod
     def __unix_timestamp_to_iso8601_timestamp(unix_timestamp: int):

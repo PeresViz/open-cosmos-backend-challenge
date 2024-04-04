@@ -6,7 +6,13 @@ from datetime import datetime, timedelta
 from pytest_lazyfixture import lazy_fixture
 
 from business_logic.business_logic import BusinessLogic
-from business_logic.constants import REASON_DATA_IS_TOO_OLD, SUSPECT_TAG, SYSTEM_TAG, REASON_DATA_IS_SYSTEM_OR_SUSPECT
+from business_logic.constants import (
+    REASON_DATA_IS_TOO_OLD,
+    SUSPECT_TAG,
+    SYSTEM_TAG,
+    REASON_DATA_IS_INACCURATE,
+    REASON_DATA_IS_INTERNAL_TO_SYSTEM,
+)
 from business_logic.exceptions.failure_retrieving_invalid_data_reasons_exception \
     import FailureRetrievingInvalidDataReasonsException
 from business_logic.exceptions.failure_retrieving_data import FailureRetrievingData
@@ -42,13 +48,13 @@ def invalidation_reasons() -> list[dict[str, Any]]:
             "time": 1711644891,
             "value": [68, 51, 127, 191],
             "tags": [SYSTEM_TAG],
-            "reasons": [REASON_DATA_IS_SYSTEM_OR_SUSPECT]
+            "reasons": [REASON_DATA_IS_INTERNAL_TO_SYSTEM]
         },
         {
             "time": 1711644991,
             "value": [68, 51, 127, 191],
             "tags": [SUSPECT_TAG, SYSTEM_TAG],
-            "reasons": [REASON_DATA_IS_TOO_OLD, REASON_DATA_IS_SYSTEM_OR_SUSPECT]
+            "reasons": [REASON_DATA_IS_TOO_OLD, REASON_DATA_IS_INACCURATE, REASON_DATA_IS_INTERNAL_TO_SYSTEM]
         },
     ]
 

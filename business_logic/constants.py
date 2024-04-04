@@ -1,4 +1,5 @@
 SYSTEM_TAG = "system"
 SUSPECT_TAG = "suspect"
 REASON_DATA_IS_TOO_OLD = "Data is too old"
-REASON_DATA_IS_SYSTEM_OR_SUSPECT = "Data is system or suspect"
+REASON_DATA_IS_INTERNAL_TO_SYSTEM = "Data is internal to the system"
+REASON_DATA_IS_INACCURATE = "Potentially inaccurate data"
