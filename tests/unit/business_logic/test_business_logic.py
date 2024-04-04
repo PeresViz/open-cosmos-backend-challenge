@@ -54,6 +54,25 @@ def invalidation_reasons() -> list[dict[str, Any]]:
 
 
 @pytest.fixture
+def invalidation_reasons_with_endtime_constraint(
+        invalidation_reasons: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    return invalidation_reasons[:2]
+
+@pytest.fixture
+def invalidation_reasons_with_endtime_constraint_with_time_in_iso_format(
+        invalidation_reasons_with_endtime_constraint: list[dict[str, Any]]
+) -> list[DataInvalidationReasons]:
+    modified_data = [change_time_and_value_format(d) for d in invalidation_reasons_with_endtime_constraint]
+    return [DataInvalidationReasons(
+        time=d['time'],
+        value=d['value'],
+        tags=d['tags'],
+        reasons=d['reasons']
+    ) for d in modified_data]
+
+
+@pytest.fixture
 def invalidation_reasons_with_time_in_iso_format(
         invalidation_reasons: list[dict[str, Any]]
 ) -> list[DataInvalidationReasons]:
@@ -83,15 +102,13 @@ def data_with_time_in_iso_format(server_data: list[dict[str, Any]]) -> list[Data
 
 
 @pytest.fixture
-def data_with_endtime_constraint(data_with_time_in_iso_format: list[Data]) -> list[Data]:
-    return data_with_time_in_iso_format[:2]
-
+def data_with_endtime_constraint(server_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return server_data[:2]
 
 @pytest.fixture
-def invalidation_reasons_with_endtime_constraint(
-        invalidation_reasons_with_time_in_iso_format: list[DataInvalidationReasons]
-) -> list[DataInvalidationReasons]:
-    return invalidation_reasons_with_time_in_iso_format[:2]
+def data_with_endtime_constraint_with_time_in_iso_format(data_with_endtime_constraint: list[dict[str, Any]]) -> list[Data]:
+    modified_data = [change_time_and_value_format(d) for d in data_with_endtime_constraint]
+    return [Data(time=d['time'], value=d['value'], tags=d['tags']) for d in modified_data]
 
 
 class TestBusinessLogic:
@@ -212,34 +229,38 @@ class TestBusinessLogic:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "start_time, end_time, return_data",
+        "start_time, end_time, server_data_input, return_data",
         [
             (
                     None,
                     None,
-                    lazy_fixture("data_with_time_in_iso_format")
+                    lazy_fixture("server_data"),
+                    lazy_fixture("data_with_time_in_iso_format"),
             ),
             (
                     datetime.strptime("2024-03-28T16:54:31", "%Y-%m-%dT%H:%M:%S"),
                     None,
-                    lazy_fixture("data_with_time_in_iso_format")
+                    lazy_fixture("server_data"),
+                    lazy_fixture("data_with_time_in_iso_format"),
             ),
             (
                     None,
                     datetime.strptime("2024-03-28T16:54:51", "%Y-%m-%dT%H:%M:%S"),
-                    lazy_fixture("data_with_endtime_constraint")
+                    lazy_fixture("data_with_endtime_constraint"),
+                    lazy_fixture("data_with_endtime_constraint_with_time_in_iso_format"),
             ),
             (
                     datetime.strptime("2024-03-28T16:54:31", "%Y-%m-%dT%H:%M:%S"),
                     datetime.strptime("2024-03-28T17:13:11", "%Y-%m-%dT%H:%M:%S"),
-                    lazy_fixture("data_with_time_in_iso_format")
+                    lazy_fixture("server_data"),
+                    lazy_fixture("data_with_time_in_iso_format"),
             ),
         ],
     )
     @patch('business_logic.business_logic.logging.getLogger')
     def test_get_data_on_success(
             get_logger_mock: MagicMock,
-            server_data: list[dict[str, Any]],
+            server_data_input: list[dict[str, Any]],
             return_data: list[dict[str, Any]],
             business_logic: BusinessLogic,
             start_time: datetime,
@@ -247,7 +268,7 @@ class TestBusinessLogic:
     ):
         # Arrange
         business_logic.logger = get_logger_mock
-        business_logic.data_storage.get_data = MagicMock(return_value=server_data)
+        business_logic.data_storage.get_data = MagicMock(return_value=server_data_input)
 
         # Act
         data = business_logic.get_data(start_time=start_time, end_time=end_time)
@@ -286,34 +307,38 @@ class TestBusinessLogic:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "start_time, end_time, return_data",
+        "start_time, end_time, invalidation_reasons_input, return_data",
         [
             (
                     None,
                     None,
+                    lazy_fixture("invalidation_reasons"),
                     lazy_fixture("invalidation_reasons_with_time_in_iso_format")
             ),
             (
                     datetime.strptime("2024-03-28T16:54:31", "%Y-%m-%dT%H:%M:%S"),
                     None,
-                    lazy_fixture("invalidation_reasons_with_time_in_iso_format")
+                    lazy_fixture("invalidation_reasons"),
+                    lazy_fixture("invalidation_reasons_with_time_in_iso_format"),
             ),
             (
                     None,
                     datetime.strptime("2024-03-28T16:54:51", "%Y-%m-%dT%H:%M:%S"),
-                    lazy_fixture("invalidation_reasons_with_endtime_constraint")
+                    lazy_fixture("invalidation_reasons_with_endtime_constraint"),
+                    lazy_fixture("invalidation_reasons_with_endtime_constraint_with_time_in_iso_format")
             ),
             (
                     datetime.strptime("2024-03-28T16:54:31", "%Y-%m-%dT%H:%M:%S"),
                     datetime.strptime("2024-03-28T17:13:11", "%Y-%m-%dT%H:%M:%S"),
-                    lazy_fixture("invalidation_reasons_with_time_in_iso_format")
+                    lazy_fixture("invalidation_reasons"),
+                    lazy_fixture("invalidation_reasons_with_time_in_iso_format"),
             ),
         ],
     )
     @patch('business_logic.business_logic.logging.getLogger')
     def test_get_reasons_for_invalid_data_on_success(
             get_logger_mock: MagicMock,
-            invalidation_reasons: list[dict[str, Any]],
+            invalidation_reasons_input: list[dict[str, Any]],
             return_data: list[dict[str, Any]],
             business_logic: BusinessLogic,
             start_time: datetime,
@@ -321,7 +346,7 @@ class TestBusinessLogic:
     ):
         # Arrange
         business_logic.logger = get_logger_mock
-        business_logic.data_storage.get_reasons_for_invalid_data = MagicMock(return_value=invalidation_reasons)
+        business_logic.data_storage.get_reasons_for_invalid_data = MagicMock(return_value=invalidation_reasons_input)
 
         # Act
         data = business_logic.get_reasons_for_invalid_data(start_time=start_time, end_time=end_time)
