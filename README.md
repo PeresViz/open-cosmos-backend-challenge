@@ -62,16 +62,16 @@ For you to access those endpoints type http://localhost:8000/docs in the browser
 to be able to use the endpoints.**
 
 
-For the GET /data endpoint you can use "user_api_key" or "admin_api_key" as the api_key.  
+For the `GET /data` endpoint you can use "user_api_key" or "admin_api_key" as the api_key.  
 
 
-For the GET /data_invalidation_reasons you can only use "admin_api_key". 
+For the `GET /data_invalidation_reasons` you can only use "admin_api_key". 
 If you try to type "user_api_key" for this endpoint you'll get an error saying you have "Insuficient permissions"
 
 
-For both endpoints you can also provide a **start_time** and/or an **end_time** to filter data.
+For both endpoints you can also provide a `start_time` and/or an `end_time` to filter data.
 These are optional parameters.
-You should provide the start_time and the end_time in the following format: **YYYY-MM-DD hh:mm:ss**
+You should provide the start_time and the end_time in the following format: `YYYY-MM-DD hh:mm:ss`
 
 
 ## Service structure
