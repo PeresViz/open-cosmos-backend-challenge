@@ -110,7 +110,7 @@ to see why some data was eventually invalidated.
 3. If the user has permissions to see the data invalidation reasons, this information is retrieved
 from MongoDB and showed to the user. If not, it will appear the message **Insufficient permissions**
 
-**Main Technical decisions**
+## Main Technical decisions
 - I decided not to have the service fetching data from the data-sever constantly.
 This decision was made to avoid overloading the service with potential unnecessary requests.
 And since the user of the service only needs to see the data when he/she calls the endpoint, 
