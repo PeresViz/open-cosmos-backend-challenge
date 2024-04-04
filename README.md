@@ -33,6 +33,7 @@ This will start the **data server** in port 28462.
 
 If the message **Unable to start data server** appears make sure to manually run a different data server
 on port 28462
+
 7. In the other tab run the following command:
 ```bash
 docker-compose up --build
