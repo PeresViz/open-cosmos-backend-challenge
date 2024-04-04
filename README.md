@@ -6,7 +6,7 @@
 This service was created as part of the Open Cosmos backend challenge and addresses the following requirements:
 
 - Fetch the data exposed by the server included as a binary with the project files.
-- Store this data in a persistent data store; there are no requirements on which type of data store to use.
+- Store this data in a persistent data storage; there are no requirements on which type of data storage to use.
 - Implement and apply the following business rules around the data:
   - Data whose timestamp is "too old" should be treated as invalid and discarded. "Too old" means the data are timestamped more than 1 hour previous to the current time.
   - The server does some basic analysis on the data and adds tags which both describe the data and possibly the outcomes of the analysis. Data internal to the system are tagged with "system" and should be discarded. If the server believes the data to be inaccurate, it will tag those data points with "suspect". Potentially inaccurate data should be discarded.
@@ -25,10 +25,10 @@ Before you run the service make sure you have ports 8000, 28462, and 27017 avail
 They will be used by the three different services of the main service.
 
 For you to get the service up and running you need to:
-1. clone this repository 
-2. have docker up and running
+1. Clone this repository.
+2. Have docker up and running.
 3. Open a terminal window.
-4. Open two tabs in that terminal window
+4. Open two tabs in that terminal window.
 5. In each tab of the terminal window navigate to the directory where you cloned the repository.
 6. In one of the tab run the following command:
 ```bash
@@ -48,7 +48,7 @@ This will start the FastAPI application in port 8000 and the MongoDB service use
 To make sure the app is up and running smoothly you should see the following message on the terminal: **Uvicorn running on http://0.0.0.0:8000**
 
 
-You could run both commands, **./start_data_server.sh & docker-compose up --build**,  together however I advise you to run in separate tabs 
+You could run both commands, **./start_data_server.sh & docker-compose up --build**,  together however I advise you to run in separate tabs, 
 so you don't get the logs mixed up from both commands.
 
 
@@ -103,12 +103,12 @@ When a user calls the **GET /data_invalidation_reasons** endpoint it will do the
 1. decorator **@fetch_data_from_server(business_logic)** is applied: 
 It will fetch data from the data-server and store it in MongoDB. 
 It will also check if there's any reasons to invalidate the data retrieved from the data-server
-and if there is it will also store those reasons in MongoDB
+and if there is it will also store those reasons in MongoDB.
 2. decorator **@requires_permissions([VIEW_DATA_INVALIDATION_REASONS_PERMISSION])** is applied:
 It will check if the user that makes the request (provided by the api_key) has permissions
 to see why some data was eventually invalidated.
 3. If the user has permissions to see the data invalidation reasons, this information is retrieved
-from MongoDB and showed to the user. If not, it will appear the message **Insufficient permissions**
+from MongoDB and showed to the user. If not, it will display the message **Insufficient permissions**.
 
 ## Main technical decisions
 - I decided not to have the service fetching data from the data-sever constantly.
@@ -135,11 +135,11 @@ so it's perfect for this use case.
 - As far as checking the permissions for accessing data, 
 a simplified version of **Role-Based Access Control (RBAC)** method was used.
 It is implemented with API key. The client should provide an api_key in the headers of 
-the request
+the request.
 
 
 ## Next steps
-As far as immediate next steps I would say:
+As immediate next steps, I suggest:
 
 
 1. **Enhance RBAC Implementation**: Consider changing the Role-Based Access Control (RBAC) implementation to a more secure and robust approach. In an ideal scenario, the `api_key` should be provided to the client upon login and then passed in subsequent requests through the header. It was assumed that the service of this repository would be integrated into a larger application where the login endpoint is implemented, allowing it to return an `api_key` for the user. Future improvements to the RBAC should take this into consideration to enhance security and access control mechanisms.
