@@ -32,7 +32,7 @@ async def get_data(
     try:
         return business_logic.get_data(start_time=start_time, end_time=end_time)
     except FailureRetrievingData as e:
-        raise HTTPException(status_code=500, detail="Error retrieving data from storage: " + str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get(f"/{DATA_INVALIDATION_REASONS_ENDPOINT}")
@@ -45,4 +45,4 @@ async def get_discard_data(
     try:
         return business_logic.get_reasons_for_invalid_data(start_time=start_time, end_time=end_time)
     except FailureRetrievingInvalidDataReasonsException as e:
-        raise HTTPException(status_code=500, detail="Error retrieving invalid data reasons: " + str(e))
+        raise HTTPException(status_code=500, detail=str(e))
